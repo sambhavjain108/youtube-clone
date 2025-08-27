@@ -1,0 +1,42 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Npm@1
+            inputs:
+               command: 'install'
+          - task: Npm@1
+            inputs:
+              command: 'run build'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: 'build'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+  - stage: Deploy
+    jobs:
+      - job: Deploy
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: AzureRmWebAppDeployment@5
+          inputs:
+            ConnectionType: 'AzureRM'
+            appType: 'webAppLinux'
+            WebAppName: 'yt-clone-app'
+            packageForLinux: '$(System.DefaultWorkingDirectory)/build'
+            RuntimeStack: 'NODE|20-lts'
+            DeploymentTypeLinux: 'oneDeploy'
