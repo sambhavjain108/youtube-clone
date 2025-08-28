@@ -50,20 +50,17 @@ stages:
   displayName: 'Deploy Stage'
   dependsOn: Build
   jobs:
-  - deployment: DeployWebApp
+  - job: DeployWebApp
     displayName: 'Deploy to Azure Web App'
-    environment: 'production'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            artifact: '$(artifactName)'
+    steps:
+    - download: current
+      artifact: '$(artifactName)'
 
-          - task: AzureWebApp@1
-            displayName: 'Deploy to Azure App Service'
-            inputs:
-              azureSubscription: '<your-service-connection-name>'
-              appType: 'webApp'
-              appName: '<your-app-service-name>'
-              package: '$(Pipeline.Workspace)/$(artifactName)/$(buildFolder).zip'
+    - task: AzureWebApp@1
+      displayName: 'Deploy to Azure App Service'
+      inputs:
+        azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
+        appType: 'webAppLinux'
+        appName: 'yt-clone-app'
+        package: '$(Pipeline.Workspace)/$(artifactName)/$(buildFolder).zip'
+        runtimeStack: 'NODE|18-lts'
