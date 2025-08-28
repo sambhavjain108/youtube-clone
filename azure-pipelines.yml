@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: 'yt-clone-agent'  # 👈 Make sure this matches your self-hosted agent pool name
+  name: 'yt-clone-agent'
 
 stages:
 - stage: Build
@@ -47,7 +47,7 @@ stages:
         ConnectionType: 'AzureRM'
         azureSubscription: 'resource-connection'
         appType: 'webAppLinux'
-        WebAppName: 'yt-clone-app'  # 👈 Your Azure Web App name
-        packageForLinux: '$(System.ArtifactsDirectory)/drop'
+        WebAppName: 'yt-clone-app'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop/build'
         RuntimeStack: 'NODE|20-lts'
         DeploymentTypeLinux: 'oneDeploy'
