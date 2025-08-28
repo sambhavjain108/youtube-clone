@@ -8,8 +8,6 @@ stages:
 - stage: Build
   jobs:
   - job: Build
-    pool:
-      name: 'yt-clone-agent'
     steps:
     - task: NodeTool@0
       inputs:
@@ -22,24 +20,23 @@ stages:
     - script: npm run build
       displayName: 'Build React app'
 
-    - script: ls -la
-      displayName: 'Check root folder content'
-
-    - script: ls -la build
-      displayName: 'Verify build folder content'
+    - script: |
+        echo "Zipping build folder"
+        cd build
+        zip -r ../build.zip .
+      displayName: 'Zip build folder'
 
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: 'build'
+        PathtoPublish: 'build.zip'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+      displayName: 'Publish zipped build as artifact'
 
 - stage: Deploy
   dependsOn: Build
   jobs:
   - job: Deploy
-    pool:
-      name: 'yt-clone-agent'
     steps:
     - task: DownloadBuildArtifacts@1
       inputs:
@@ -47,16 +44,15 @@ stages:
         downloadType: 'single'
         artifactName: 'drop'
         downloadPath: '$(System.ArtifactsDirectory)'
+      displayName: 'Download build artifact'
 
-    - script: ls -la $(System.ArtifactsDirectory)/drop
-      displayName: 'Verify drop folder content'
-      
     - task: AzureRmWebAppDeployment@5
       inputs:
         ConnectionType: 'AzureRM'
-        azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
+        azureSubscription: 'resource-connection'
         appType: 'webAppLinux'
         WebAppName: 'yt-clone-app'
-        packageForLinux: '$(System.ArtifactsDirectory)/drop'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop/build.zip'
         RuntimeStack: 'NODE|18-lts'
-        DeploymentTypeLinux: 'oneDeploy'
+        DeploymentTypeLinux: 'zipDeploy'
+      displayName: 'Deploy zipped React app to Azure'
