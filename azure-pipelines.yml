@@ -22,11 +22,9 @@ stages:
     - script: npm run build
       displayName: 'Build React app'
 
-    # Debug: Check root directory contents
     - script: ls -la
       displayName: 'Check root folder content'
 
-    # Debug: Check build folder contents
     - script: ls -la build
       displayName: 'Verify build folder content'
 
@@ -50,12 +48,15 @@ stages:
         artifactName: 'drop'
         downloadPath: '$(System.ArtifactsDirectory)'
 
+    - script: ls -la $(System.ArtifactsDirectory)/drop
+      displayName: 'Verify drop folder content'
+
     - task: AzureRmWebAppDeployment@5
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'resource-connection'
         appType: 'webAppLinux'
         WebAppName: 'yt-clone-app'
-        packageForLinux: '$(System.ArtifactsDirectory)/drop/build'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop'
         RuntimeStack: 'NODE|20-lts'
         DeploymentTypeLinux: 'oneDeploy'
