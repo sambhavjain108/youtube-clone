@@ -13,8 +13,6 @@ stages:
   - stage: Build
     jobs:
       - job: Build
-        pool:
-          vmImage: 'ubuntu-latest'
         steps:
           - task: Npm@1
             inputs:
@@ -32,8 +30,6 @@ stages:
   - stage: Deploy
     jobs:
       - job: Deploy
-        pool:
-          vmImage: 'ubuntu-latest'
         steps:
         - task: AzureRmWebAppDeployment@5
           inputs:
