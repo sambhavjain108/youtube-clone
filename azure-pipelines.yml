@@ -1,41 +1,52 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
 
 pool:
- name: 'yt-clone-agent'
+  name: 'yt-clone-agent'  # 👈 Make sure this matches your self-hosted agent pool name
 
 stages:
-  - stage: Build
-    jobs:
-      - job: Build
-        steps:
-          - task: Npm@1
-            inputs:
-               command: 'install'
-          - task: Npm@1
-            inputs:
-              command: 'run build'
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      name: 'yt-clone-agent'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js'
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathtoPublish: 'build'
-              ArtifactName: 'drop'
-              publishLocation: 'Container'
+    - script: npm install
+      displayName: 'Install dependencies'
 
-  - stage: Deploy
-    jobs:
-      - job: Deploy
-        steps:
-        - task: AzureRmWebAppDeployment@5
-          inputs:
-            ConnectionType: 'AzureRM'
-            appType: 'webAppLinux'
-            WebAppName: 'yt-clone-app'
-            packageForLinux: '$(System.DefaultWorkingDirectory)/build'
-            RuntimeStack: 'NODE|20-lts'
-            DeploymentTypeLinux: 'oneDeploy'
+    - script: npm run build
+      displayName: 'Build React app'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'build'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - job: Deploy
+    pool:
+      name: 'yt-clone-agent'
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
+    - task: AzureRmWebAppDeployment@5
+      inputs:
+        ConnectionType: 'AzureRM'
+        appType: 'webAppLinux'
+        WebAppName: 'yt-clone-app'  # 👈 Your Azure Web App name
+        packageForLinux: '$(System.ArtifactsDirectory)/drop'
+        RuntimeStack: 'NODE|20-lts'
+        DeploymentTypeLinux: 'oneDeploy'
