@@ -45,6 +45,7 @@ stages:
     - task: AzureRmWebAppDeployment@5
       inputs:
         ConnectionType: 'AzureRM'
+        azureSubscription: 'resource-connection'
         appType: 'webAppLinux'
         WebAppName: 'yt-clone-app'  # 👈 Your Azure Web App name
         packageForLinux: '$(System.ArtifactsDirectory)/drop'
