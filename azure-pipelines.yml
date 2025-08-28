@@ -22,6 +22,14 @@ stages:
     - script: npm run build
       displayName: 'Build React app'
 
+    # Debug: Check root directory contents
+    - script: ls -la
+      displayName: 'Check root folder content'
+
+    # Debug: Check build folder contents
+    - script: ls -la build
+      displayName: 'Verify build folder content'
+
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: 'build'
