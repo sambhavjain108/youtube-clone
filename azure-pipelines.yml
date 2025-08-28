@@ -6,6 +6,9 @@
 trigger:
 - main
 
+pool:
+ name: 'yt-clone-agent'
+
 stages:
   - stage: Build
     jobs:
