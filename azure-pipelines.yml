@@ -50,13 +50,13 @@ stages:
 
     - script: ls -la $(System.ArtifactsDirectory)/drop
       displayName: 'Verify drop folder content'
-
+      
     - task: AzureRmWebAppDeployment@5
       inputs:
         ConnectionType: 'AzureRM'
-        azureSubscription: 'resource-connection'
+        azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
         appType: 'webAppLinux'
         WebAppName: 'yt-clone-app'
         packageForLinux: '$(System.ArtifactsDirectory)/drop'
-        RuntimeStack: 'NODE|20-lts'
+        RuntimeStack: 'NODE|18-lts'
         DeploymentTypeLinux: 'oneDeploy'
