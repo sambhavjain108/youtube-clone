@@ -1,12 +1,15 @@
-trigger:
+trigger: 
 - main
+
+
 
 stages:
 - stage: Build
   jobs:
   - job: Build
     pool:
-      name: 'yt-clone-agent'   # ✅ self-hosted agent
+      name: 'yt-clone-agent'
+
     steps:
     - task: Npm@1
       inputs:
@@ -16,26 +19,17 @@ stages:
         command: 'custom'
         customCommand: 'run build'
 
-    # Zip build folder
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: 'build'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
-        replaceExistingArchive: true
-
+    
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/build.zip'
+        PathtoPublish: 'build'
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-- stage: Deploy
+- stage: Deploy 
   jobs:
   - job: Deploy
-    pool:
-      name: 'yt-clone-agent'   # ✅ self-hosted agent
+    
     steps:
     - task: DownloadBuildArtifacts@1
       inputs:
@@ -43,11 +37,11 @@ stages:
         downloadType: 'single'
         artifactName: 'drop'
         downloadPath: '$(System.ArtifactsDirectory)'
-
     - task: AzureRmWebAppDeployment@4
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
         appType: 'webAppLinux'
         WebAppName: 'yt-clone-app'
-        packageForLinux: '$(System.ArtifactsDirectory)/drop/build.zip'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop'
+        RuntimeStack: 'STATICSITE|1.0'
