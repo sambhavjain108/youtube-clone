@@ -6,7 +6,8 @@ stages:
   jobs:
   - job: Build
     pool:
-      vmImage: 'yt-clone-agent'
+      name: 'yt-clone-agent'
+
     steps:
     - task: Npm@1
       inputs:
@@ -27,7 +28,7 @@ stages:
   jobs:
   - job: Deploy
     pool:
-      vmImage: 'yt-clone-agent'
+      name: 'yt-clone-agent'
     steps:
     - task: DownloadBuildArtifacts@1
       inputs:
