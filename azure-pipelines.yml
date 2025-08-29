@@ -1,6 +1,11 @@
 trigger: 
 - main
 
+
+pool:
+      name: 'yt-clone-agent'
+
+
 stages:
 - stage: Build
   jobs:
@@ -27,8 +32,7 @@ stages:
 - stage: Deploy 
   jobs:
   - job: Deploy
-    pool:
-      name: 'yt-clone-agent'
+    
     steps:
     - task: DownloadBuildArtifacts@1
       inputs:
