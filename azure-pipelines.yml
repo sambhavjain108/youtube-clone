@@ -1,66 +1,47 @@
 trigger:
-- main
-
-pool:
-  vmImage: 'ubuntu-latest'
+- main   # change if needed
 
 variables:
-  buildFolder: 'build'
-  artifactName: 'drop'
+  appServiceName: 'yt-clone-web'                  # <-- your App Service name
+  acrLoginServer: 'myacr.azurecr.io'              # <-- your ACR login server
+  imageName: 'youtube-clone'
+  dockerfilePath: 'Dockerfile'
+  azureServiceConnection: 'sc-azure-rm'           # <-- your Azure service connection name
+  dockerRegistryServiceConnection: 'sc-acr'       # <-- your Docker registry connection name
 
 stages:
-- stage: Build
-  displayName: 'Build Stage'
+- stage: Build_Push
+  displayName: Build & Push Docker Image
   jobs:
-  - job: BuildJob
-    displayName: 'Build React App'
+  - job: Build
+    pool:
+      name: ''   # <-- your self-hosted agent pool
     steps:
     - checkout: self
 
-    - task: NodeTool@0
+    - task: Docker@2
+      displayName: Build and Push
       inputs:
-        versionSpec: '18.x'
-      displayName: 'Install Node.js'
-
-    - script: |
-        npm install
-      displayName: 'Install dependencies'
-
-    - script: |
-        npm run build
-      displayName: 'Build React app'
-
-    - task: ArchiveFiles@2
-      displayName: 'Archive build folder'
-      inputs:
-        rootFolderOrFile: '$(buildFolder)'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(buildFolder).zip'
-        replaceExistingArchive: true
-
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish build artifact'
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(buildFolder).zip'
-        ArtifactName: '$(artifactName)'
-        publishLocation: 'Container'
+        command: buildAndPush
+        repository: $(imageName)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildId)
+          latest
 
 - stage: Deploy
-  displayName: 'Deploy Stage'
-  dependsOn: Build
+  displayName: Deploy to Azure Web App
+  dependsOn: Build_Push
   jobs:
-  - job: DeployWebApp
-    displayName: 'Deploy to Azure Web App'
+  - job: DeployJob
+    pool:
+      name: 'MyLinuxPool'   # <-- self-hosted agent pool
     steps:
-    - download: current
-      artifact: '$(artifactName)'
-
-    - task: AzureWebApp@1
-      displayName: 'Deploy to Azure App Service'
+    - task: AzureWebAppContainer@1
+      displayName: Deploy container to Web App
       inputs:
-        azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
-        appType: 'webAppLinux'
-        appName: 'yt-clone-app'
-        package: '$(Pipeline.Workspace)/$(artifactName)/$(buildFolder).zip'
-        runtimeStack: 'NODE|18-lts'
+        azureSubscription: $(azureServiceConnection)
+        appName: $(appServiceName)
+        containers: |
+          $(acrLoginServer)/$(imageName):$(Build.BuildId)
