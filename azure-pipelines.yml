@@ -1,47 +1,45 @@
-trigger:
-- main   # change if needed
-
-variables:
-  appServiceName: 'yt-clone-web'                  # <-- your App Service name
-  acrLoginServer: 'myacr.azurecr.io'              # <-- your ACR login server
-  imageName: 'youtube-clone'
-  dockerfilePath: 'Dockerfile'
-  azureServiceConnection: 'sc-azure-rm'           # <-- your Azure service connection name
-  dockerRegistryServiceConnection: 'sc-acr'       # <-- your Docker registry connection name
+trigger: 
+- main
 
 stages:
-- stage: Build_Push
-  displayName: Build & Push Docker Image
+- stage: Build
   jobs:
   - job: Build
     pool:
-      name: ''   # <-- your self-hosted agent pool
+      vmImage: 'yt-clone-agent'
     steps:
-    - checkout: self
-
-    - task: Docker@2
-      displayName: Build and Push
+    - task: Npm@1
       inputs:
-        command: buildAndPush
-        repository: $(imageName)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(Build.BuildId)
-          latest
+        command: 'install'
+    - task: Npm@1
+      inputs:
+        command: 'custom'
+        customCommand: 'run build'
 
-- stage: Deploy
-  displayName: Deploy to Azure Web App
-  dependsOn: Build_Push
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'build'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy 
   jobs:
-  - job: DeployJob
+  - job: Deploy
     pool:
-      name: 'MyLinuxPool'   # <-- self-hosted agent pool
+      vmImage: 'yt-clone-agent'
     steps:
-    - task: AzureWebAppContainer@1
-      displayName: Deploy container to Web App
+    - task: DownloadBuildArtifacts@1
       inputs:
-        azureSubscription: $(azureServiceConnection)
-        appName: $(appServiceName)
-        containers: |
-          $(acrLoginServer)/$(imageName):$(Build.BuildId)
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure for Students(d4740efc-a4a2-4ebb-a22d-479705f709bf)'
+        appType: 'webAppLinux'
+        WebAppName: 'yt-clone-app'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop'
+        RuntimeStack: 'STATICSITE|1.0'
